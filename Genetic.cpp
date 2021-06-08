@@ -1,51 +1,64 @@
+/**
+ * @file Genetic.cpp
+ * @author Johnny Aguero (johnny.zaet08@gmail.com)
+ * @brief Este archivo se encarga de la logica del algortimo genetico para buscar la solucion mas optima al problema
+ * @return Retorna una lista de los mejores individuos de cada generacion
+ * @version 0.1
+ * @date 2021-06-07
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 #define POBLACION 4
 #define LONG_COD 16
-#define LIMITE -5.12
-#define PROB_CRUCE 0.3
-#define PROB_MUTACION 0.001
-#define INTERVALO 10.24/pow(2,LONG_COD/2)
- 
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "tinyxml/tinyxml.h"
- 
+
+//Tipo de estructura la cual contiene el gen de cada individuo y su aptitud (su posicion relativa)
 typedef struct {
     int genotipo[LONG_COD];
     int aptitud;
 } Individuo;
- 
+
+//Metodos utilizados para la resolucion del problema
 int fitness (Individuo);
 Individuo * generarInicial(void);
 Individuo * generarPoblacion (Individuo *);
 Individuo * seleccionTorneos(Individuo * pob);
-void mutacionHijos (Individuo *);
 void cruzarSeleccion (Individuo *);
 Individuo elite(Individuo *);
 void AG();
 void imprimePoblacion (Individuo *);
 void imprimeGenotipo(Individuo);
-void build_simple_doc();
+void build_simple_doc(Individuo, Individuo, Individuo);
+bool compara(Individuo, Individuo);
+bool sigue(Individuo);
  
 int main() {
+    srand (time(NULL));
     AG();
     return 0;
 }
  
-/* PROC fitness (double p1, double p2)                  DEV (double)
- * MODIFICA nada
- * EFECTO recibe dos valores que representan los puntos que caracterizan a un individuo
- *  la funcion sirve para calcular la aptitud o fitness de cierto individuo segun sus
- *  puntos. este valor de aptitud es el que devuelve la funcion. */
- 
+/**
+ * @brief Recibe un individuo y se encarga de calcular su aptitud
+ * 
+ * @param ind individuo
+ * @return int la aptitud del individuo
+ */
 int fitness (Individuo ind)
 {
+    int querido[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
     int fit = 0;
     for(int i = 0; i < 16; i++){
-        if(ind.genotipo[i] != i+1 && ind.genotipo[i] != 0){
+        if(ind.genotipo[i] != querido[i] && ind.genotipo[i] != 0){
             for(int j = 0; j < 16; i++){
-                if(ind.genotipo[i] == j + 1){
+                if(querido[i] == ind.genotipo[j]){
                     break;
                 } else{
                     fit++;
@@ -56,42 +69,47 @@ int fitness (Individuo ind)
     return fit;
 }
   
-/* PROC generarPoblacion (void)                         DEV (Individuo *)
- * MODIFICA nada
- * EFECTO esta funcion genera una poblacion con la cantidad de individuos dada por la
- *  macro POBLACION. para generar cada individuo utiliza la funcion generarIndividuo()
- *  y una vez ha terminado el bucle, devuelve el puntero al primer individuo    */
- 
+
+ /**
+  * @brief Esta funcion recibe un individuo el cual es el mejor adaptado de la generacion anterior para
+  *  luego crear una poblacion con base en sus mutaciones posibles
+  * 
+  * @param Inicial 
+  * @return Individuo* 
+  */
 Individuo * generarPoblacion(Individuo * Inicial)
 {
     Individuo * poblacion;
     Individuo ind1, ind2, ind3, ind4;
     int i;
+    int ref = 0;
  
     poblacion = (Individuo *) malloc(sizeof(Individuo)*POBLACION);
-    for(i=0;i<LONG_COD;i++)
+    for(i=0;i<LONG_COD;i++){
         if(Inicial->genotipo[i] == 0){
             break;
         }
-        
+    }
     if(i == 3 || i == 7 || i == 11 || i == 15){
-        if(i + 5 < 16){
+        if(i + 5 <= 16){
             for(int j=0; j<17; j++){
                 ind1.genotipo[j] = Inicial->genotipo[j];
             }
             ind1.genotipo[i] = ind1.genotipo[i+4];
             ind1.genotipo[i+4] = 0;
             ind1.aptitud = fitness(ind1);
-            poblacion[1] = ind1;
+            poblacion[ref] = ind1;
+            ref++;
         }
-        if(i - 5 > 0){
+        if(i - 5 >= 0){
             for(int j=0; j<17; j++){
                 ind2.genotipo[j] = Inicial->genotipo[j];
             }
             ind2.genotipo[i] = ind2.genotipo[i-4];
             ind2.genotipo[i-4] = 0;
             ind2.aptitud = fitness(ind2);
-            poblacion[2] = ind2;
+            poblacion[ref] = ind2;
+            ref++;
         }
         for(int j=0; j<17; j++){
             ind3.genotipo[j] = Inicial->genotipo[j];
@@ -99,26 +117,29 @@ Individuo * generarPoblacion(Individuo * Inicial)
         ind3.genotipo[i] = ind3.genotipo[i-1];
         ind3.genotipo[i-1] = 0;
         ind3.aptitud = fitness(ind3);
-        poblacion[0] = ind3;
+        poblacion[ref] = ind3;
+        ref++;
     }
     else if(i == 0 || i == 4 || i == 8 || i == 12){
-        if(i + 5 < 16){
+        if(i + 5 <= 16){
             for(int j=0; j<17; j++){
                 ind1.genotipo[j] = Inicial->genotipo[j];
             }
             ind1.genotipo[i] = ind1.genotipo[i+4];
             ind1.genotipo[i+4] = 0;
             ind1.aptitud = fitness(ind1);
-            poblacion[1] = ind1;
+            poblacion[ref] = ind1;
+            ref++;
         }
-        if(i - 5 > 0){
+        if(i - 5 >= 0){
             for(int j=0; j<17; j++){
                 ind2.genotipo[j] = Inicial->genotipo[j];
             }
-            ind2.genotipo[i] = ind2.genotipo[i+4];
+            ind2.genotipo[i] = ind2.genotipo[i-4];
             ind2.genotipo[i-4] = 0;
             ind2.aptitud = fitness(ind2);
-            poblacion[2] = ind2;
+            poblacion[ref] = ind2;
+            ref++;
         }
         for(int j=0; j<17; j++){
             ind3.genotipo[j] = Inicial->genotipo[j];
@@ -126,24 +147,30 @@ Individuo * generarPoblacion(Individuo * Inicial)
         ind3.genotipo[i] = ind3.genotipo[i+1];
         ind3.genotipo[i+1] = 0;
         ind3.aptitud = fitness(ind3);
-        poblacion[0] = ind3;
+        poblacion[ref] = ind3;
+        ref++;
     }
     else{
-        for(int j=0; j<17; j++){
-            ind1.genotipo[j] = Inicial->genotipo[j];
+        if(i+5 <= 16){
+            for(int j=0; j<17; j++){
+                ind1.genotipo[j] = Inicial->genotipo[j];
+            }
+            ind1.genotipo[i] = ind1.genotipo[i+4];
+            ind1.genotipo[i+4] = 0;
+            ind1.aptitud = fitness(ind1);
+            poblacion[ref] = ind1;
+            ref++;
         }
-        ind1.genotipo[i] = ind1.genotipo[i+4];
-        ind1.genotipo[i+4] = 0;
-        ind1.aptitud = fitness(ind1);
-        poblacion[2] = ind1;
-
-        for(int j=0; j<17; j++){
-            ind2.genotipo[j] = Inicial->genotipo[j];
+        if(i-5 >= 0){
+            for(int j=0; j<17; j++){
+                ind2.genotipo[j] = Inicial->genotipo[j];
+            }
+            ind2.genotipo[i] = ind2.genotipo[i-4];
+            ind2.genotipo[i-4] = 0;
+            ind2.aptitud = fitness(ind2);
+            poblacion[ref] = ind2;
+            ref++;
         }
-        ind2.genotipo[i] = ind2.genotipo[i+4];
-        ind2.genotipo[i-4] = 0;
-        ind2.aptitud = fitness(ind2);
-        poblacion[3] = ind2;
 
         for(int j=0; j<17; j++){
             ind3.genotipo[j] = Inicial->genotipo[j];
@@ -151,7 +178,8 @@ Individuo * generarPoblacion(Individuo * Inicial)
         ind3.genotipo[i] = ind3.genotipo[i+1];
         ind3.genotipo[i+1] = 0;
         ind3.aptitud = fitness(ind3);
-        poblacion[0] = ind3;
+        poblacion[ref] = ind3;
+        ref++;
 
         for(int j=0; j<17; j++){
             ind4.genotipo[j] = Inicial->genotipo[j];
@@ -159,21 +187,19 @@ Individuo * generarPoblacion(Individuo * Inicial)
         ind4.genotipo[i] = ind4.genotipo[i-1];
         ind4.genotipo[i-1] = 0;
         ind4.aptitud = fitness(ind4);
-        poblacion[1] = ind4;
+        poblacion[ref] = ind4;
+        ref++;
     }
     return poblacion;
 }
  
-/* PROC seleccionTorneos (Individuo *)                  DEV (Individuo *)
- * MODIFICA nada
- * EFECTO se crea un nuevo vector de individuos que contendra a los individuos seleccionados
- *  para el cruce. la seleccion se hace por torneos por tanto cada individuo seleccionado
- *  sera el que tenga mejor aptitud de dos candidatos. el proceso se repite en POBLACION-1
- *  iteraciones, que es la cantidad de individuos que se deben seleccionar. la reserva de
- *  memoria se hace sobre POBLACION individuos dado que, como luego vamos a seleccionar el
- *  mejor de la poblacion anterior por elitismo, debemos dejar una plaza de la siguiente
- *  generacion libre. la seleccion es con repeticion */
- 
+ /**
+  * @brief Crea un nuevo vector de individuo de una poblacion, seleccionando el mejor entre un combate
+  *  de dos de estos individuos
+  * 
+  * @param poblacion 
+  * @return Individuo* 
+  */
 Individuo * seleccionTorneos (Individuo * poblacion)
 {
     Individuo candidato_a, candidato_b;
@@ -193,28 +219,6 @@ Individuo * seleccionTorneos (Individuo * poblacion)
     }
  
     return seleccion;
-}
- 
-/* PROC mutacionHijos (Individuo *)                         DEV (void)
- * MODIFICA (Individuo *)
- * EFECTO esta funcion aplica la mutacion segun la probabilidad dada por PROB_MUTACION.
- *  recibe un vector de individuos en el que debe ocurrir que los dos primeros sean
- *  los hijos correspondientes a un cruce. el genotipo de cada uno de los individuos
- *  se recorre por completo calculando la probabilidad de que el bit mute y cambiando
- *  si se diera el caso positivo    */
- 
-void mutacionHijos (Individuo * hijos)
-{
-    int i, j;
- 
-    for(i=0; i<2; i++)
-        for(j=0; j<LONG_COD; j++)
-            if ((double) rand()/(RAND_MAX+1.0) < PROB_MUTACION)
-            {
-                if(hijos[i].genotipo[j])
-                    hijos[i].genotipo[j] = 0;
-                else hijos[i].genotipo[j] = 1;
-            }
 }
  
 /* PROC cruzarSeleccion (Individuo *)                   DEV (void)
@@ -250,33 +254,41 @@ void cruzarSeleccion (Individuo * seleccion)
             seleccion[i].aptitud = fitness(seleccion[i]);
             seleccion[i+1].aptitud = fitness(seleccion[i+1]);
             aux.aptitud = fitness(aux);
-            seleccion[2] = aux;
+            seleccion[3] = aux;
     }
 }
  
-/* PROC elite (Individuo * poblacion)                   DEV (Individuo)
- * MODIFICA nada
- * EFECTO se trata de una funcion que devuelve el mejor individuo de una poblacion
- *  que se pasa como argumento. utiliza un individuo como comparador y devuelve
- *  el que para nuestro caso tiene el mejor fitness, es decir, aptitud mas baja */
- 
+ /**
+  * @brief La siguiente funcion se encarga de elegir el mejor adaptado de una poblacion para
+  *  convertirlo en padre de la siguiente generacion
+  * 
+  * @param poblacion 
+  * @return Individuo 
+  */
 Individuo elite (Individuo * poblacion)
 {
-    int i;
     Individuo best = poblacion[0];
  
-    for(i=0; i<POBLACION; i++)
-        if(best.aptitud > poblacion[i].aptitud && poblacion[i].aptitud != 0)
+    for(int i=0; i<POBLACION; i++){
+        int ceros = 0;
+        for(int k = 0; k < 16; k++){
+            if(poblacion[i].genotipo[k] == 0){
+                ceros ++;
+            }
+        }
+        if(best.aptitud > poblacion[i].aptitud && poblacion[i].aptitud != 0 && ceros >= 1)
             best = poblacion[i];
- 
+    }
     return best;
 }
 
-/* PROC generarInicial (void)                   DEV (Individuo)
- * MODIFICA nada
- * EFECTO Se trata de una funcion que genera el caso especifico
- * en este caso genera el individuo de inicio */
 
+/**
+ * @brief Se encarga de crear aleatoriamente un individuo el cual sera el padre de la primer generacion
+ * y en base a el se generara la poblacion
+ * 
+ * @return Individuo* 
+ */
 Individuo * generarInicial(void){
     Individuo * correcto = (Individuo *) malloc (sizeof(Individuo));
 
@@ -306,29 +318,22 @@ Individuo * generarInicial(void){
     return correcto;
 }
 
-/* PROC AG(void)                                                DEV (void)
- * MODIFICA nada
- * EFECTO se trata de la funcion que ejecuta el algoritmo. el proceso es el siguiente
+
+ /**
+* @brief se trata de la funcion que ejecuta el algoritmo. el proceso es el siguiente
  *  1 - Generar la poblacion
  *  2 - Seleccion de candidatos al cruce
  *  3 - Cruce de los candidatos (incluye mutacion)
  *  4 - Incluir al mejor de la generacion anterior en la nueva
- *  5 - Repetir el proceso  */
- 
+ *  5 - Repetir el proceso  
+ * */
 void AG (void)
 {
     Individuo * inicial = generarInicial();
-    Individuo best;
+    Individuo best, bestTemp, bestTemp1;
     Individuo * seleccion, * poblacion = generarPoblacion(inicial);
-
-    /*Individuo * correcto;
-    for(int i=1; i<17; i++){
-        correcto->genotipo[i-1] = i;
-    }
-    for(int i=0;i<16;i++){
-		std::cout << correcto->genotipo[i] << " ";
-    }*/
-
+    std::cout << std::endl;
+    std::cout << "Poblacion inicial" << std::endl;
     imprimePoblacion(poblacion);
     int generacion = 0;
  
@@ -336,18 +341,39 @@ void AG (void)
     {
         seleccion = seleccionTorneos(poblacion);
         cruzarSeleccion(seleccion);
-        best = elite(seleccion);
-        std::cout << std::endl;
-        std::cout << std::endl;
+        std::cout << "Poblacion despues de cruzar" << std::endl;
+        imprimePoblacion(seleccion);
+        best = elite(poblacion);
+        if(compara(best, bestTemp)){
+            best = poblacion[1];
+        } else if (compara(best, bestTemp1)){
+            best = poblacion[2];
+        }
+
+        std::cout << "BEST:" << std::endl;
         imprimeGenotipo(best);
         free(poblacion);
-        std::cout << std::endl;
+
+        if(generacion >= 1){
+            bestTemp1 = bestTemp;
+        }
+        bestTemp = best;
+
+        printf ("\n - Es la generacion numero %i\n", generacion+1);
+
         poblacion = generarPoblacion(&best);
-        std::cout << std::endl;
+        std::cout << "\nNueva poblacion" << std::endl;
         imprimePoblacion(poblacion);
         generacion++;
-    } while (generacion < 1);
-    build_simple_doc();
+
+        if(generacion > 50){
+            break;
+        }
+
+    } while (!sigue(best));
+
+    //build_simple_doc();
+    
     free(poblacion);
     std::cout << std::endl;
     printf ("*************************************\n");
@@ -357,28 +383,29 @@ void AG (void)
     printf ("*************************************\n");
 }
  
-/* PROC imprimePoblacion (Individuo * pob)                      DEV (void)
- * MODIFICA nada
- * EFECTO   es una funcion auxiliar que imprime por pantalla toda la informacion
- *  relativa a una poblacion que se debe pasar como argumento. recorre con un
- *  bucle for todos los individuos para imprimirlos uno a uno y se ayuda de la
- *  funcion decoder para sacar la aptitud   */
- 
+
+ /**
+  * @brief Recibe una poblacion y se encarga de imprimir toda la poblacion
+  * 
+  * @param pob 
+  */
 void imprimePoblacion (Individuo * pob)
 { 
     for(int i = 0; i < POBLACION; i++)
     {
-        std::cout << std::endl;
-        imprimeGenotipo(pob[i]);
+        if(pob[i].genotipo[0] < 16){
+            imprimeGenotipo(pob[i]);
+            std::cout << std::endl;
+        }
     }
 }
  
-/* PROC imprimeGenotipo (Individuo x)                           DEV (void)
- * MODIFICA nada
- * EFECTO esta funcion se encarga de imprimir por pantalla el genotipo asociado a
- *  un individuo que se pasa como argumento. recorre el genotipo por medio de
- *  un bucle for y no necesita funciones auxiliares */
  
+ /**
+  * @brief Recive un parametro Individuo al cual se le procede a imprimir todo el genotipo
+  * 
+  * @param x 
+  */
 void imprimeGenotipo (Individuo x)
 {
     int i;
@@ -388,15 +415,66 @@ void imprimeGenotipo (Individuo x)
 
 }
  
-void build_simple_doc()
+/*void build_simple_doc(Individuo Poblacion, Individuo Padre, Individuo Hijo)
 {
-	// Make xml: <?xml ..><Hello>World</Hello>
 	TiXmlDocument doc;
 	TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "", "" );
-	TiXmlElement * element = new TiXmlElement( "Hello" );
-	TiXmlText * text = new TiXmlText( "World" );
-	element->LinkEndChild( text );
-	doc.LinkEndChild( decl );
-	doc.LinkEndChild( element );
+    doc.LinkEndChild( decl );
+
+	TiXmlElement * elementP = new TiXmlElement( "Padre" );
+	TiXmlText * textP = new TiXmlText( "poner padres" );
+	elementP->LinkEndChild( textP );
+	doc.LinkEndChild( elementP );
+
+    TiXmlElement * elementM = new TiXmlElement( "Poblacion/Mutaciones" );
+	TiXmlText * textM = new TiXmlText( "poner poblacion" );
+	elementM->LinkEndChild( textM );
+	doc.LinkEndChild( elementM );
+
+    TiXmlElement * elementB = new TiXmlElement( "Mejor hijo" );
+	TiXmlText * textB = new TiXmlText( "best" );
+	elementB->LinkEndChild( textB );
+	doc.LinkEndChild( elementB );
+
 	doc.SaveFile( "madeByHand.xml" );
+}*/
+
+/**
+ * @brief Recibe dos individuos para comparar si son los mismos, en este caso revisa si indivios
+ * anteriores son iguales para realizar otra tipo
+ * 
+ * @param best 
+ * @param bestTemp 
+ * @return true 
+ * @return false 
+ */
+bool compara(Individuo best, Individuo bestTemp){
+    for(int i = 0; i < LONG_COD; i++){
+        if(best.genotipo[i] != bestTemp.genotipo[i]){
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * @brief Recibe el indivudo best para comparar si su genotipo es el correcto y asi
+ * parar el ciclo.
+ * 
+ * @param best 
+ * @return true 
+ * @return false 
+ */
+bool sigue(Individuo best){
+    int cero = 0;
+    for(int i = 0; i < LONG_COD; i++){
+        if (best.genotipo[i] != i + 1 && cero != 0)
+        {
+            return false;
+        }
+        else if(best.genotipo[i] != i + 1){
+            cero++;
+        }
+    }
+    return true;
 }
