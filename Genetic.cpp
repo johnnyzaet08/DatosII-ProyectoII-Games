@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include "tinyxml/tinyxml.h"
+#include <tinyxml.h>
 
 //Tipo de estructura la cual contiene el gen de cada individuo y su aptitud (su posicion relativa)
 typedef struct {
@@ -35,7 +35,7 @@ Individuo elite(Individuo *);
 void AG();
 void imprimePoblacion (Individuo *);
 void imprimeGenotipo(Individuo);
-void build_simple_doc(Individuo, Individuo, Individuo);
+void build_simple_doc(Individuo*, Individuo, Individuo, int);
 bool compara(Individuo, Individuo);
 bool sigue(Individuo);
  
@@ -351,7 +351,11 @@ void AG (void)
         }
 
         std::cout << "BEST:" << std::endl;
+        
         imprimeGenotipo(best);
+        
+        build_simple_doc(poblacion , bestTemp, best, generacion);
+        
         free(poblacion);
 
         if(generacion >= 1){
@@ -366,13 +370,13 @@ void AG (void)
         imprimePoblacion(poblacion);
         generacion++;
 
-        if(generacion > 50){
+        if(generacion > 10){
             break;
         }
 
     } while (!sigue(best));
 
-    //build_simple_doc();
+    build_simple_doc(poblacion , bestTemp, best, generacion);
     
     free(poblacion);
     std::cout << std::endl;
@@ -410,34 +414,55 @@ void imprimeGenotipo (Individuo x)
 {
     int i;
  
-    for(i=0; i<LONG_COD; i++)
+    for(i=0; i<LONG_COD; i++){
         std::cout << x.genotipo[i] << " ";
-
+	}
 }
- 
-/*void build_simple_doc(Individuo Poblacion, Individuo Padre, Individuo Hijo)
+
+std::string to_str(Individuo indi){
+	std::string texto = "";
+	
+	for(int i=0; i<LONG_COD; i++){
+        	texto += std::to_string(indi.genotipo[i]) + " ";
+        }
+ 	return texto;
+}
+
+std::string to_strPo(Individuo * pobla){
+	std::string texto = "";
+	for(int j=0; j<4; j++){
+		for(int i=0; i<LONG_COD; i++){
+        		texto += std::to_string(pobla[j].genotipo[i]) + " ";
+        	}
+        	texto += ";";
+        }
+ 	return texto;
+}
+
+
+void build_simple_doc(Individuo * Poblacion, Individuo Padre, Individuo Hijo, int Generacion)
 {
 	TiXmlDocument doc;
 	TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "", "" );
-    doc.LinkEndChild( decl );
+    	doc.LinkEndChild( decl );
 
 	TiXmlElement * elementP = new TiXmlElement( "Padre" );
-	TiXmlText * textP = new TiXmlText( "poner padres" );
+	TiXmlText * textP = new TiXmlText(to_str(Padre));
 	elementP->LinkEndChild( textP );
 	doc.LinkEndChild( elementP );
 
-    TiXmlElement * elementM = new TiXmlElement( "Poblacion/Mutaciones" );
-	TiXmlText * textM = new TiXmlText( "poner poblacion" );
+    	TiXmlElement * elementM = new TiXmlElement( "Poblacion/Mutaciones" );
+	TiXmlText * textM = new TiXmlText( to_strPo(Poblacion) );
 	elementM->LinkEndChild( textM );
 	doc.LinkEndChild( elementM );
 
-    TiXmlElement * elementB = new TiXmlElement( "Mejor hijo" );
-	TiXmlText * textB = new TiXmlText( "best" );
+    	TiXmlElement * elementB = new TiXmlElement( "Mejor hijo" );
+	TiXmlText * textB = new TiXmlText( to_str(Hijo) );
 	elementB->LinkEndChild( textB );
 	doc.LinkEndChild( elementB );
 
-	doc.SaveFile( "madeByHand.xml" );
-}*/
+	doc.SaveFile( "./xml/" + std::to_string(Generacion) + ".xml" );
+}
 
 /**
  * @brief Recibe dos individuos para comparar si son los mismos, en este caso revisa si indivios
@@ -456,7 +481,6 @@ bool compara(Individuo best, Individuo bestTemp){
     }
     return true;
 }
-
 /**
  * @brief Recibe el indivudo best para comparar si su genotipo es el correcto y asi
  * parar el ciclo.
